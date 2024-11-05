@@ -71,6 +71,8 @@ int main()
     cout << "Операции присванивания" << endl;
     CityEvent event2 = event1;
     CityEvent event3 = move(event2);
+    event1 = event2;
+    event2 = move(event3);
 
     cout << "\n\n";
 
