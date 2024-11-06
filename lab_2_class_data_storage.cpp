@@ -82,7 +82,6 @@ int main()
     CityEvent event4("Workshop", "Coding workshop", { "C++", "Python", "JavaScript" });
     cout << "Добавление в вектор экземпляра класса с помощью push_back..." << endl;
     listEvents.push_back(event3);
-    listEvents.push_back(event1);
     cout << "Добавление в вектор экземпляра класса с помощью emplace_back..." << endl;
     listEvents.emplace_back(event4);
 
@@ -127,7 +126,7 @@ int main()
     cityEventList.push_back(event8);
     cityEventList.push_back(event9);
 
-    cout << "Начало цикла...\n";
+    cout << "\nНачало цикла...\n";
     // Вывод всех мероприятий из списка
     for (CityEvent evnt : cityEventList) {
         cout << evnt.getName() << endl;
