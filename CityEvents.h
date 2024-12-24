@@ -3,10 +3,12 @@
 #include <string>
 #include <vector>
 #include "Person.h"
+#include <random>
 
 class CityEvent
 {
 public: 
+	CityEvent();
 	CityEvent(std::string nameEvents, std::string descrEvents, std::vector<std::string> topicsEvents);
 	CityEvent(const CityEvent& cityEvent);
 	CityEvent(CityEvent&& cityEvent) noexcept;
@@ -14,6 +16,10 @@ public:
 
 	CityEvent& operator=(const CityEvent& cityEvent);
 	CityEvent& operator=(CityEvent&& cityEvent) noexcept;
+	bool operator== (const CityEvent& cityEvent);
+	bool operator<(const CityEvent& other) const;
+
+	void generateRandomVisitors(int size);
 
 	// получение данных
 	std::string getName();
@@ -33,6 +39,7 @@ public:
 	bool isThereOnRegistry(std::string phone);															// проверка человека в списке зарегистрированных
 
 private:
+	std::random_device rd;
 	std::string name;									// название мероприятия
 	std::string description;							// описание мероприятия
 	std::vector<std::string> topics;					// темы мероприятия

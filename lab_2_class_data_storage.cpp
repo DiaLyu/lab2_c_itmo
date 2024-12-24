@@ -3,135 +3,161 @@
 #include <vector>
 #include <list>
 #include <Windows.h>
+#include <random>
+#include <algorithm>
+#include <numeric>
 
 #include "CityEvents.h"
 #include "Person.h"
 
 using namespace std;
 
-void processCityEvents(std::vector<CityEvent> events) {
-    // Выводим названия всех мероприятий
-    cout << "Начало функции processCityEvents\n";
-    for (int i = 0; i < events.size(); i++) {
-        cout << to_string(i) << " " << events[i].getName() << endl;
+template <typename T>
+void quick_remove_at(std::vector<T>& v, typename std::vector<T>::iterator it)
+{
+    if (it != std::end(v)) {
+        *it = std::move(v.back());
+        v.pop_back();
     }
-    cout << "Конец функции\n";
-}
-
-CityEvent* createDynamicCityEvent() {
-    CityEvent* event = new CityEvent("Festival", "A summer festival", { "Music", "Food", "Art" });
-    return event;
-}
-
-CityEvent& returnEventByReference(CityEvent& event) {
-    return event; // Возвращаем ссылку на переданный объект
 }
 
 int main()
 {
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
+    // 1
+    cout << "1. Создать вектор v1 размером от 500 до 1000 элементов, число элементов не известно до запуска программы\n";
 
-    // создание экземпляра класса с помощью стандартного конструктора
-    // часть кода демонстрации работы всех методов класса
-    CityEvent event1("Conference", "Tech conference", { "AI", "Security", "Networking" });
-    event1.registrNewVisitor("Ivan", "Ivanov", "12345");
-    event1.registrNewVisitor("Petr", "Petrov", "67890");
-    event1.registrNewVisitor("Alina", "Bushmakina", "95763");
+    random_device rd;
+    default_random_engine engine(rd());
+    uniform_int_distribution<size_t> sizeDist(500, 1000);
+    size_t vectorSize = sizeDist(engine);
 
-    event1.updateDataVisitor("12345", "Ilya");
+    vector<CityEvent> v1(vectorSize);
+    
+    cout << "Размер вектора v1: " << v1.size() << "\n\n";
+    // 2
+    cout << "2. Создать вектор v2, поместив в него последние 200 элементов вектора v1. Рассмотрите решение для произвольных b и e, которые задают позиции первого и последнего копируемых элементов.\n";
+    cout << "---- создание вектора с последними 200 значениями из вектора v1 ----\n";
+    vector<CityEvent> v2_1(v1.end() - 200, v1.end());
+    cout << "Размер вектора v2_1: " << v2_1.size() << "\n";
 
-    event1.deleteVisitor("67890");
+    cout << "---- создание вектора со случайными позициями b и e ----\n";
+    uniform_int_distribution<size_t> sizeDist_b(0, 400);
+    uniform_int_distribution<size_t> sizeDist_e(401, v1.size());
+    size_t b = sizeDist_b(engine);
+    size_t e = sizeDist_e(engine);
+    cout << "Диапазон значений:\n";
+    cout << "b = " << b << '\n';
+    cout << "e = " << e << '\n';
 
-    cout << "Есть человек с номером 67890? " << to_string(event1.isThereOnRegistry("67890")) << endl;
+    vector<CityEvent> v2_2(v1.begin() + b, v1.begin() + e);
+    cout << "Размер вектора v2: " << v2_2.size() << "\n\n";
 
-    event1.updateName("Highload development conference");
-    event1.updateDescription("conference for developers in the field of highly loaded systems");
-    event1.updateTopics({"Highly loaded systems", "Cloud technologies", "Networking"});
+    // 3
+    cout << "3. Сформировать список list1, поместив в него первые n (от 20 до 50) наибольших элементов вектора v1\n";
 
-    cout << "Итоговая информация в экземпляре\n";
-    cout << "Event name: " << event1.getName() << endl;
-    cout << "Event description: " << event1.getDescription() << endl;
+    size_t n = rand() % 31 + 20;
+    // сортируем по количеству зарегистрированных на мероприятие по убыванию
+    sort(v1.begin(), v1.end(), [](CityEvent& a, CityEvent& b) {
+        return a.getVisitors().size() > b.getVisitors().size();
+    });
 
-    string str_topics = "";
-    vector<string> topics = event1.getTopics();
-    for (int i = 0; i < topics.size(); i++) {
-        str_topics += topics[i] + " ";
+    list<CityEvent> list1(v1.begin(), v1.begin() + n);
+    for (auto& event : list1) {
+        cout << event.getName() << ". Количество гостей: " << to_string(event.getVisitors().size()) << endl;
+    }
+    cout << "Размер списка list1: " << list1.size() << "\n\n";
+
+    // 4
+    cout << "4. Сформировать список list2, поместив в него последние n (от 20 до 50) наименьших элементов вектора v2, порядок элементов не важен.\n";
+    list<CityEvent> list2(v2_1.begin(), v2_1.end());
+    list2.sort([](CityEvent& a, CityEvent& b) {
+        return a.getVisitors().size() < b.getVisitors().size();
+    });
+    list2.erase(next(list2.begin(), n), list2.end());
+    for (auto& event : list2) {
+        cout << event.getName() << ". Количество гостей: " << to_string(event.getVisitors().size()) << endl;
+    }
+    cout << "Размер списка list2: " << list2.size() << "\n\n";
+
+
+    // 5
+    cout << "5. Удалить из векторов v1 и v2 перемещенные элементы.\n";
+    cout << "List1 > " << list1.size() << "\n";
+    cout << "Before Size v1 > " << v1.size() << "\n";
+    v1.erase(remove_if(v1.begin(), v1.end(), [&list1](const CityEvent& e) {
+        return find(list1.begin(), list1.end(), e) != list1.end();
+        }), v1.end());
+    cout << "After Size v1 > " << v1.size() << "\n";
+    cout << "   -----   \n";
+    cout << "List2 > " << list2.size() << "\n";
+    cout << "Before Size v2_1 > " << v2_1.size() << "\n";
+    v2_1.erase(remove_if(v2_1.begin(), v2_1.end(), [&list2](const CityEvent& e) {
+        return find(list2.begin(), list2.end(), e) != list2.end();
+        }), v2_1.end());
+    cout << "After Size v2_1 > " << v2_1.size() << "\n\n";
+
+    // 6
+    cout << "6. Для списка list1 найти элемент со средним значением. Перегруппировать элементы списка так, чтобы в начале оказались все элементы, большие среднего значения\n";
+    double average = accumulate(list1.begin(), list1.end(), 0.0,
+        [](double sum, CityEvent& event) {
+            return sum + event.getVisitors().size();
+        }) / list1.size();
+
+    auto it = partition(list1.begin(), list1.end(),
+        [average](CityEvent& a) {
+            return a.getVisitors().size() > average; // Условие для элементов в первой половине
+        });
+    for (auto& event : list1) {
+        cout << event.getName() << ". Количество гостей: " << to_string(event.getVisitors().size()) << endl;
+    }
+    cout << "\n";
+
+    // 7
+    cout << "7. Удалите из списка list2 все нечётные элементы\n";
+    cout << "До - Размер списка list2: " << list2.size() << "\n\n";
+    list2.remove_if([](CityEvent& event) { return event.getName() == "Концерт"; });
+    cout << "После - Размер списка list2: " << list2.size() << "\n\n";
+
+    // 8
+    cout << "8. Создайте вектор v3 из элементов, которые присутствуют и в векторе v1 и в векторе v2.\n";
+    sort(v1.begin(), v1.end(), [](CityEvent& a, CityEvent& b) {
+        return a.getVisitors().size() < b.getVisitors().size();
+        });
+    sort(v2_1.begin(), v2_1.end(), [](CityEvent& a, CityEvent& b) {
+        return a.getVisitors().size() < b.getVisitors().size();
+        });
+    vector<CityEvent> v3; // Копируем v1 в v3
+    set_intersection(v1.begin(), v1.end(), v2_1.begin(), v2_1.end(), back_inserter(v3));
+    cout << "Размер списка v1: " << v1.size() << "\n";
+    cout << "Размер списка v3: " << v3.size() << "\n\n";
+
+    // 9
+    cout << "9. Для списков list1 и list2 из списка с большим числом элементов удалите первые n так, чтобы оба списка имели бы одинаковый размер.\n";
+    if (list1.size() > list2.size()) {
+        auto it_l = list1.begin();
+        advance(it_l, list1.size() - list2.size());
+        list1.erase(list1.begin(), it_l);
+    }
+    else {
+        auto it_l = list2.begin();
+        advance(it_l, list2.size() - list1.size());
+        list2.erase(list2.begin(), it_l);
     }
 
-    cout << "Event topics: " << str_topics << endl;
+    list<pair<CityEvent, CityEvent>> list3;
+    transform(list1.begin(), list1.end(), list2.begin(), std::back_inserter(list3), [](auto o1, auto o2)
+        { return std::make_pair(o1, o2); });
 
-    vector<Person> registrFaces = event1.getVisitors();
+    cout << "Размер списка list3: " << list3.size() << "\n\n";
 
-    cout << "Registrants:\n";
-    for (int i = 0; i < registrFaces.size(); i++) {
-        cout << to_string(i) << " " << registrFaces[i].name << " " << registrFaces[i].surname << " " << registrFaces[1].phone << endl;
-    }
+    // 10
+    cout << "10. Решите предыдущую задачу для векторов v1 и v2 без предварительного приведения векторов к одному размеру. Пар с пустыми значениями быть не должно.\n";
+    list<pair<CityEvent, CityEvent>> list4;
+    transform(v1.begin(), v1.begin() + min(v1.size(), v2_1.size()), v2_1.begin(), back_inserter(list4), [](auto o1, auto o2)
+        { return make_pair(o1, o2); });
+    cout << "Размер списка list4: " << list4.size() << endl;
 
-    cout << "Операции присванивания" << endl;
-    CityEvent event2 = event1;
-    CityEvent event3 = move(event2);
-    event1 = event2;
-    event2 = move(event3);
-
-    cout << "\n\n";
-
-    cout << "Вектор из событий" << endl;
-    vector<CityEvent> listEvents;
-    cout << "Создание экземпляра класса..." << endl;
-    CityEvent event4("Workshop", "Coding workshop", { "C++", "Python", "JavaScript" });
-    cout << "Добавление в вектор экземпляра класса с помощью push_back..." << endl;
-    listEvents.push_back(event3);
-    cout << "Добавление в вектор экземпляра класса с помощью emplace_back..." << endl;
-    listEvents.emplace_back(event4);
-
-    cout << "\nПередача список из событий в функцию" << endl;
-    processCityEvents(listEvents);
-
-    cout << "\nСоздание динамического экземпляра, присвоив ей результат из функции" << endl;
-    CityEvent* dynamicEvent = createDynamicCityEvent();
-    dynamicEvent->registrNewVisitor("Anna", "Smith", "54321");
-
-    delete dynamicEvent;
-
-    cout << "\nСоздание динамического экземпляра" << endl;
-    CityEvent* dynamicEvent1 = new CityEvent("Festival_2", "A summer festival 2", { "Music", "Food", "Art" });
-    dynamicEvent1->registrNewVisitor("Elena", "Smith", "75424");
-
-    delete dynamicEvent1;
-
-    cout << "\nПередача экземпляра в функцию по ссылке и вывод данных" << endl;
-    CityEvent& referenceEvent = returnEventByReference(event1);
-    std::cout << "Событие по ссылке: " << referenceEvent.getName() << std::endl;
-
-    dynamicEvent = nullptr;
-    dynamicEvent1 = nullptr;
-
-    cout << "\nКонтейнер list" << endl;
-    list<CityEvent> cityEventList;
-    cout << "Добавление в вектор экземпляра класса с помощью push_back..." << endl;
-    cityEventList.push_back(event3);
-    cout << "Добавление в вектор экземпляра класса с помощью emplace_back..." << endl;
-    cityEventList.emplace_back(event4);
-
-    cout << "Добавление новых элементов (больше 5 по заданию)...\n";
-    CityEvent event5("name5", "descrition5", {"topic 1", "topic2"});
-    CityEvent event6("name6", "descrition6", { "topic 1", "topic2" });
-    CityEvent event7("name7", "descrition7", { "topic 1", "topic2" });
-    CityEvent event8("name8", "descrition8", { "topic 1", "topic2" });
-    CityEvent event9("name9", "descrition9", { "topic 1", "topic2" });
-    cityEventList.push_back(event5);
-    cityEventList.push_back(event6);
-    cityEventList.push_back(event7);
-    cityEventList.push_back(event8);
-    cityEventList.push_back(event9);
-
-    cout << "\nНачало цикла...\n";
-    // Вывод всех мероприятий из списка
-    for (CityEvent evnt : cityEventList) {
-        cout << evnt.getName() << endl;
-    }
-    cout << "Конец цикла...";
-
-    cout << "\n\n\n";
+    return 0;
 }
